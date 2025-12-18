@@ -8,12 +8,14 @@ const StyledLayout = styled.div`
   grid-template-columns: 0.2fr 1fr;
   grid-template-rows: auto 1fr;
 
-  min-height: 100dvh;
+  height: 100vh;
 `;
 
 const Main = styled.main`
   background-color: var(--color-grey-50);
   padding: 4rem 4.8rem 6.4rem;
+
+  overflow: scroll;
 `;
 
 const Container = styled.div`
