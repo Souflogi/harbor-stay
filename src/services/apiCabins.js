@@ -22,17 +22,39 @@ export async function getCabins() {
  * @throws {Error} If creation fails
  */
 export async function createCabine(cabin) {
+  const { image, ...cabinData } = cabin;
+  const file = image?.[0];
+
+  let imageUrl = null;
+
+  if (file) {
+    const fileName = `cabin-${Date.now()}-${file.name}`.replace(/[ /]/g, "-");
+
+    const { error: uploadError } = await supabase.storage
+      .from("cabin-images")
+      .upload(fileName, file);
+
+    if (uploadError)
+      throw new Error(uploadError.message || "Image upload failed");
+
+    // getPublicUrl is synchronous; it just builds the URL string client-side.
+    const { data } = supabase.storage
+      .from("cabin-images")
+      .getPublicUrl(fileName);
+
+    imageUrl = data.publicUrl;
+  }
+
   const { data, error } = await supabase
     .from("cabins")
-    .insert([cabin])
+    .insert([{ ...cabinData, image: imageUrl }])
     .select();
-  if (error) {
-    throw new Error(error.message || "Cannot create cabin ");
-  }
+
+  if (error) throw new Error(error.message || "Cannot create cabin");
   return data;
 }
 
-/**
+/*
  * Delete a cabin from the database
  * Includes validation for foreign key constraints
  * @param {number} id - Cabin ID to delete
