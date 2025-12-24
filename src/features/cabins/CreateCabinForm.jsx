@@ -4,28 +4,42 @@ import Button from "../../ui/Button";
 import FileInput from "../../ui/FileInput";
 import Textarea from "../../ui/Textarea";
 import { useForm } from "react-hook-form";
-import { useCreateCabin } from "../../hooks/useCreateCabin";
+import { useCreateCabin } from "./useCreateCabin";
 import FormRow from "../../ui/FormRow";
+import { useUpdateCabin } from "./useUpdateCabin";
 
-function CreateCabinForm({ onCancel }) {
-  const { mutate: createCabin, isPending } = useCreateCabin();
+function CreateCabinForm({ cabinToEdit = {}, onCancel }) {
+  const { mutate: createCabin, isPending: createIsPending } = useCreateCabin();
+  const { mutate: updateCabin, isPending: updateIsPending } = useUpdateCabin();
 
+  const isEditing = Boolean(cabinToEdit?.id);
+  const isPending = createIsPending || updateIsPending;
   const {
     register,
     handleSubmit,
     reset,
     formState: { errors, isSubmitting, isValid },
-  } = useForm();
+  } = useForm({ defaultValues: isEditing ? cabinToEdit : null });
 
   function onSubmit(data) {
-    createCabin(data, {
-      // Close modal after successful creation (hook handles toast + cache)
-      onSuccess: () => {
-        // reset();
-        onCancel();
-      },
-    });
+    if (isEditing) {
+      updateCabin(
+        { ...data, id: cabinToEdit.id },
+        {
+          onSuccess: onCancel,
+        }
+      );
+    } else {
+      createCabin(data, {
+        // Close modal after successful creation (hook handles toast + cache)
+        onSuccess: () => {
+          // reset();
+          onCancel();
+        },
+      });
+    }
   }
+
   function onError(errors) {
     // console.log(errors);
   }
@@ -105,7 +119,7 @@ function CreateCabinForm({ onCancel }) {
       <FormRow label="Cabin photo" error={errors.image?.message}>
         <FileInput
           {...register("image", {
-            required: "Must upload an image",
+            required: isEditing ? false : "Must upload an image",
           })}
           id="image"
           accept="image/*"
@@ -118,7 +132,9 @@ function CreateCabinForm({ onCancel }) {
         <Button variation="secondary" type="reset" onClick={onCancel}>
           Cancel
         </Button>
-        <Button disabled={isPending}>Add cabin</Button>
+        <Button disabled={isPending}>
+          {isEditing ? "Save Edits" : "Add cabin"}
+        </Button>
       </FormRow>
     </Form>
   );

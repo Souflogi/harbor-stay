@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useToast } from "./useToast";
-import { deleteCabin } from "../services/apiCabins";
-import { queryKeys } from "../utils/queryKeys";
+import { useToast } from "../../hooks/useToast";
+import { deleteCabin } from "../../services/apiCabins";
+import { queryKeys } from "../../utils/queryKeys";
 
 /**
  * Custom hook for deleting a cabin

@@ -1,8 +1,9 @@
 import styled from "styled-components";
 import { formatCurrency } from "../../utils/helpers";
 import ConfirmDelete from "../../ui/ConfirmDelete";
-import { useDeleteCabin } from "../../hooks/useDeleteCabin";
 import { useState } from "react";
+import CreateCabinForm from "./CreateCabinForm";
+import { useDeleteCabin } from "./useDeleteCabin";
 
 const TableRow = styled.div`
   display: grid;
@@ -42,6 +43,7 @@ const Discount = styled.div`
 `;
 function CabinRow({ cabin }) {
   const { mutate: DeleteCabin, isPending } = useDeleteCabin();
+  const [showForm, setShowForm] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
 
   const deleteHandle = () => {
@@ -56,10 +58,17 @@ function CabinRow({ cabin }) {
         <Cabin>{cabin.name}</Cabin>
         <div>Fits up to {cabin.maxCapacity} guests</div>
         <Price>{formatCurrency(cabin.regularPrice)}</Price>
-        <Discount>{formatCurrency(cabin.discount)}</Discount>
-        <button onClick={() => setShowConfirm(true)} disabled={isPending}>
-          Delete
-        </button>
+        {cabin.discount ? (
+          <Discount>{formatCurrency(cabin.discount)}</Discount>
+        ) : (
+          <span>&mdash;</span>
+        )}
+        <div>
+          <button onClick={() => setShowConfirm(true)} disabled={isPending}>
+            Delete
+          </button>
+          <button onClick={() => setShowForm(true)}>Edit</button>
+        </div>
       </TableRow>
       {showConfirm && (
         <ConfirmDelete
@@ -67,6 +76,12 @@ function CabinRow({ cabin }) {
           onConfirm={deleteHandle}
           onCancel={() => setShowConfirm(false)}
           disabled={isPending}
+        />
+      )}
+      {showForm && (
+        <CreateCabinForm
+          onCancel={() => setShowForm(false)}
+          cabinToEdit={cabin}
         />
       )}
     </>
