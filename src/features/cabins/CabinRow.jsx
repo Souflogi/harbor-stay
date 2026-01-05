@@ -4,6 +4,14 @@ import ConfirmDelete from "../../ui/ConfirmDelete";
 import { useState } from "react";
 import CreateCabinForm from "./CreateCabinForm";
 import { useDeleteCabin } from "./useDeleteCabin";
+import ButtonIcon from "../../ui/ButtonIcon";
+import {
+  HiOutlinePencilSquare,
+  HiOutlineSquare2Stack,
+  HiOutlineTrash,
+} from "react-icons/hi2";
+import { useCreateCabin } from "./useCreateCabin";
+import ConfirmDuplicate from "../../ui/ConfirmDuplicate";
 
 const TableRow = styled.div`
   display: grid;
@@ -42,39 +50,83 @@ const Discount = styled.div`
   color: var(--color-green-700);
 `;
 function CabinRow({ cabin }) {
-  const { mutate: DeleteCabin, isPending } = useDeleteCabin();
+  const { id, image, name, maxCapacity, regularPrice, discount, description } =
+    cabin;
+  const { mutate: DeleteCabin, isPending: isDeleting } = useDeleteCabin();
+  const { mutate: CreateCabin, isPending: IsCreating } = useCreateCabin();
+
+  const isPending = isDeleting || IsCreating;
+
   const [showForm, setShowForm] = useState(false);
-  const [showConfirm, setShowConfirm] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showDuplicateConfirm, setShowDuplicateConfirm] = useState(false);
 
   const deleteHandle = () => {
-    DeleteCabin(cabin.id);
-    setShowConfirm(false);
+    DeleteCabin(id);
+    setShowDeleteConfirm(false);
   };
 
+  const duplicateHandle = () => {
+    CreateCabin({
+      name: name + "-copy",
+      maxCapacity,
+      regularPrice,
+      discount,
+      description,
+      image,
+    });
+    setShowDuplicateConfirm(false);
+  };
   return (
     <>
       <TableRow role="row">
-        <Img src={cabin.image} />
-        <Cabin>{cabin.name}</Cabin>
-        <div>Fits up to {cabin.maxCapacity} guests</div>
-        <Price>{formatCurrency(cabin.regularPrice)}</Price>
-        {cabin.discount ? (
-          <Discount>{formatCurrency(cabin.discount)}</Discount>
+        <Img src={image} />
+        <Cabin>{name}</Cabin>
+        <div>Fits up to {maxCapacity} guests</div>
+        <Price>{formatCurrency(regularPrice)}</Price>
+        {discount ? (
+          <Discount>{formatCurrency(discount)}</Discount>
         ) : (
           <span>&mdash;</span>
         )}
         <div>
-          <button onClick={() => setShowConfirm(true)} disabled={isPending}>
-            Delete
-          </button>
-          <button onClick={() => setShowForm(true)}>Edit</button>
+          <ButtonIcon
+            type="button"
+            aria-label="Duplicate cabin"
+            onClick={() => setShowDuplicateConfirm(true)}
+          >
+            <HiOutlineSquare2Stack />
+          </ButtonIcon>
+          <ButtonIcon
+            type="button"
+            onClick={() => setShowDeleteConfirm(true)}
+            disabled={isPending}
+            aria-label="Delete cabin"
+          >
+            <HiOutlineTrash />
+          </ButtonIcon>
+          <ButtonIcon
+            type="button"
+            onClick={() => setShowForm(true)}
+            aria-label="Edit cabin"
+          >
+            <HiOutlinePencilSquare />
+          </ButtonIcon>
         </div>
       </TableRow>
-      {showConfirm && (
+      {showDeleteConfirm && (
         <ConfirmDelete
-          resourceName={cabin.name}
+          resourceName={name}
           onConfirm={deleteHandle}
-          onCancel={() => setShowConfirm(false)}
+          onCancel={() => setShowDeleteConfirm(false)}
+          disabled={isPending}
+        />
+      )}
+      {showDuplicateConfirm && (
+        <ConfirmDuplicate
+          resourceName={name}
+          onConfirm={duplicateHandle}
+          onCancel={() => setShowDuplicateConfirm(false)}
           disabled={isPending}
         />
       )}

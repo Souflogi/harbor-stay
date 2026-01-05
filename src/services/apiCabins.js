@@ -36,22 +36,33 @@ async function uploadCabinImage(file) {
 
   return data.publicUrl;
 }
+async function resolveCabinImage(image) {
+  return image instanceof FileList && image.length
+    ? { image: await uploadCabinImage(image[0]) }
+    : typeof image === "string" && image.length
+    ? { image }
+    : {};
+}
 
 /**
- * Create a new cabin in the database
- * @param {Object} cabin - Cabin object with name, capacity, price, etc.
- * @returns {Promise<Array>} Array with the created cabin object
- * @throws {Error} If creation fails
+ * Create a cabin record.
+ * Accepts either a new image FileList (uploads and stores the public URL) or an
+ * existing image URL (used as-is) so this can also serve duplication flows.
+ * Any id on the input is ignored to avoid primary key conflicts.
+ * @param {Object} cabin - Cabin data (name, capacity, price, etc.).
+ * @returns {Promise<Array>} Array with the created cabin object.
+ * @throws {Error} If creation fails.
  */
 export async function createCabin(cabin) {
-  const { image, ...cabinData } = cabin;
-  const file = image?.[0];
-
-  const imageUrl = await uploadCabinImage(file);
+  const { id, image, ...cabinData } = cabin;
+  const insertData = {
+    ...cabinData,
+    ...(await resolveCabinImage(image)),
+  };
 
   const { data, error } = await supabase
     .from("cabins")
-    .insert([{ ...cabinData, image: imageUrl }])
+    .insert([insertData])
     .select()
     .single();
 
@@ -68,13 +79,10 @@ export async function createCabin(cabin) {
  */
 export async function updateCabin(updatedCabin) {
   const { id, image, ...cabinData } = updatedCabin;
-  const updateData = { ...cabinData };
-
-  if (image instanceof FileList && image.length) {
-    updateData.image = await uploadCabinImage(image[0]);
-  } else if (typeof image === "string" && image.length) {
-    updateData.image = image;
-  }
+  const updateData = {
+    ...cabinData,
+    ...(await resolveCabinImage(image)),
+  };
   // If no valid image is provided, omit it (exclude it) so the existing DB value is preserved.
 
   const { data, error } = await supabase
@@ -110,3 +118,4 @@ export async function deleteCabin(id) {
     throw new Error(error.message || "Failed to delete cabin");
   }
 }
+
