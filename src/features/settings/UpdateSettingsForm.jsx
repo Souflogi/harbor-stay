@@ -4,7 +4,6 @@ import FormRow from "../../ui/FormRow";
 import Input from "../../ui/Input";
 import Spinner from "../../ui/Spinner";
 import { useSettings } from "./useSettings";
-import Button from "../../ui/Button";
 import { useEffect } from "react";
 import { useUpdateSettings } from "./useUpdateSettings";
 
@@ -21,8 +20,8 @@ function UpdateSettingsForm() {
     formState: { errors },
   } = useForm({
     defaultValues: settings,
-    mode: "onBlur",
-    reValidateMode: "onBlur",
+    // mode: "onBlur",
+    // reValidateMode: "onBlur",
   });
 
   useEffect(() => {

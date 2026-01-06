@@ -8,7 +8,7 @@ import { useCreateCabin } from "./useCreateCabin";
 import FormRow from "../../ui/FormRow";
 import { useUpdateCabin } from "./useUpdateCabin";
 
-function CreateCabinForm({ cabinToEdit = {}, onCancel }) {
+function CreateCabinForm({ cabinToEdit = {}, onCloseModal }) {
   const { mutate: createCabin, isPending: createIsPending } = useCreateCabin();
   const { mutate: updateCabin, isPending: updateIsPending } = useUpdateCabin();
 
@@ -26,16 +26,16 @@ function CreateCabinForm({ cabinToEdit = {}, onCancel }) {
       updateCabin(
         { ...data, id: cabinToEdit.id },
         {
-          onSuccess: onCancel,
+          onSuccess: () => onCloseModal?.(),
         }
       );
     } else {
       createCabin(data, {
-        // Close modal after successful creation (hook handles toast + cache)
-        onSuccess: () => {
-          // reset();
-          onCancel();
-        },
+        onSuccess: () => onCloseModal?.(),
+        // onSuccess: () => {
+        //   reset();
+        //   onCloseModal?.();
+        // },
       });
     }
   }
@@ -45,7 +45,10 @@ function CreateCabinForm({ cabinToEdit = {}, onCancel }) {
   }
 
   return (
-    <Form onSubmit={handleSubmit(onSubmit, onError)}>
+    <Form
+      onSubmit={handleSubmit(onSubmit, onError)}
+      type={onCloseModal ? "modal" : "regular"}
+    >
       <FormRow label="Cabin name" error={errors.name?.message}>
         <Input
           {...register("name", {
@@ -129,7 +132,11 @@ function CreateCabinForm({ cabinToEdit = {}, onCancel }) {
 
       <FormRow>
         {/* type is an HTML attribute! */}
-        <Button variation="secondary" type="reset" onClick={onCancel}>
+        <Button
+          variation="secondary"
+          type="reset"
+          onClick={() => onCloseModal?.()}
+        >
           Cancel
         </Button>
         <Button disabled={isPending}>
