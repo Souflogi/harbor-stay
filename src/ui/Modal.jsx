@@ -1,3 +1,11 @@
+import {
+  cloneElement,
+  createContext,
+  isValidElement,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 import { createPortal } from "react-dom";
 import { HiXMark } from "react-icons/hi2";
 import styled from "styled-components";
@@ -51,18 +59,58 @@ const Button = styled.button`
   }
 `;
 
-function Modal({ children, onClose }) {
-  return createPortal(
-    <Overlay onClick={onClose}>
-      <StyledModal onClick={e => e.stopPropagation()}>
-        <Button onClick={onClose}>
-          <HiXMark />
-        </Button>
-        <div>{children}</div>
-      </StyledModal>
-    </Overlay>,
-    document.getElementById("modal-root")
+const ModalContext = createContext(null);
+
+function Modal({ children }) {
+  const [openName, setOpenName] = useState("");
+
+  const open = name => setOpenName(name);
+  const close = () => setOpenName("");
+
+  return (
+    <ModalContext.Provider value={{ openName, open, close }}>
+      {children}
+    </ModalContext.Provider>
   );
 }
+
+Modal.Open = function Open({ children, opens }) {
+  const { open } = useContext(ModalContext);
+
+  return cloneElement(children, { onClick: () => open(opens) });
+};
+
+Modal.Window = function Window({ children, name }) {
+  const { openName, close } = useContext(ModalContext);
+  const isOpen = name === openName;
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    function handleKeyDown(event) {
+      if (event.key === "Escape") close();
+    }
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, close]);
+
+  if (!isOpen) return null;
+  return createPortal(
+    <Overlay onClick={close}>
+      <StyledModal onClick={e => e.stopPropagation()}>
+        <Button onClick={close}>
+          <HiXMark />
+        </Button>
+        <div>
+          {isValidElement(children)
+            ? cloneElement(children, { onCloseModal: close })
+            : children}
+        </div>
+      </StyledModal>
+    </Overlay>,
+    document.getElementById("modal-root"),
+  );
+};
 
 export default Modal;

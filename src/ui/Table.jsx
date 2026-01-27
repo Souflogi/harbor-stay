@@ -1,3 +1,4 @@
+import { createContext, useContext } from "react";
 import styled from "styled-components";
 
 const StyledTable = styled.div`
@@ -11,7 +12,7 @@ const StyledTable = styled.div`
 
 const CommonRow = styled.div`
   display: grid;
-  grid-template-columns: ${(props) => props.columns};
+  grid-template-columns: ${props => props.$columns};
   column-gap: 2.4rem;
   align-items: center;
   transition: none;
@@ -19,7 +20,6 @@ const CommonRow = styled.div`
 
 const StyledHeader = styled(CommonRow)`
   padding: 1.6rem 2.4rem;
-
   background-color: var(--color-grey-50);
   border-bottom: 1px solid var(--color-grey-100);
   text-transform: uppercase;
@@ -58,3 +58,53 @@ const Empty = styled.p`
   text-align: center;
   margin: 2.4rem;
 `;
+
+const tableContext = createContext(null);
+
+export default function Table({ children, columns }) {
+  return (
+    <tableContext.Provider value={{ columns }}>
+      <StyledTable role="table">{children}</StyledTable>
+    </tableContext.Provider>
+  );
+}
+
+Table.Header = function Header({ children }) {
+  const { columns } = useContext(tableContext);
+  return (
+    <StyledHeader $columns={columns} role="row" as={"header"}>
+      {children}
+    </StyledHeader>
+  );
+};
+
+Table.Body = function Body({
+  data,
+  render,
+  children,
+  emptyMessage = "No data to show",
+}) {
+  if (data && render) {
+    if (!data.length) return <Empty>{emptyMessage}</Empty>;
+    return <StyledBody>{data.map(render)}</StyledBody>;
+  }
+  return <StyledBody>{children}</StyledBody>;
+};
+
+Table.Row = function Row({ children }) {
+  const { columns } = useContext(tableContext);
+
+  return (
+    <StyledRow $columns={columns} role="row">
+      {children}
+    </StyledRow>
+  );
+};
+
+Table.Footer = function TableFooter({ children }) {
+  return <Footer>{children}</Footer>;
+};
+
+Table.Empty = function TableEmpty({ children }) {
+  return <Empty>{children}</Empty>;
+};

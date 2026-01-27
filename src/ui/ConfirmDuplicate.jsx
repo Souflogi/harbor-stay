@@ -20,17 +20,25 @@ const StyledConfirmDuplicate = styled.div`
   }
 `;
 
-function ConfirmDuplicate({ resourceName, onConfirm, onCancel, disabled }) {
+function ConfirmDuplicate({ resourceName, onConfirm, onCloseModal, disabled }) {
   return (
     <StyledConfirmDuplicate>
       <Heading as="h3">Duplicate {resourceName}</Heading>
       <p>Are you sure you want to duplicate {resourceName} ?</p>
 
       <div>
-        <Button variation="secondary" disabled={disabled} onClick={onCancel}>
+        <Button
+          variation="secondary"
+          disabled={disabled}
+          onClick={onCloseModal}
+        >
           Cancel
         </Button>
-        <Button variation="danger" disabled={disabled} onClick={onConfirm}>
+        <Button
+          variation="danger"
+          disabled={disabled}
+          onClick={() => onConfirm(onCloseModal)}
+        >
           Duplicate
         </Button>
       </div>

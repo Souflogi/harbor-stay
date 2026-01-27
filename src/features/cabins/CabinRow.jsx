@@ -1,7 +1,6 @@
 import styled from "styled-components";
 import { formatCurrency } from "../../utils/helpers";
 import ConfirmDelete from "../../ui/ConfirmDelete";
-import { useState } from "react";
 import CreateCabinForm from "./CreateCabinForm";
 import { useDeleteCabin } from "./useDeleteCabin";
 import ButtonIcon from "../../ui/ButtonIcon";
@@ -12,19 +11,8 @@ import {
 } from "react-icons/hi2";
 import { useCreateCabin } from "./useCreateCabin";
 import ConfirmDuplicate from "../../ui/ConfirmDuplicate";
-
-const TableRow = styled.div`
-  display: grid;
-  grid-template-columns: 0.6fr 1.8fr 2.2fr 1fr 1fr 1fr;
-  column-gap: 2.4rem;
-  align-items: center;
-  font-family: "Sono";
-  padding: 1.4rem 2.4rem;
-
-  &:not(:last-child) {
-    border-bottom: 1px solid var(--color-grey-100);
-  }
-`;
+import Modal from "../../ui/Modal";
+import Table from "../../ui/Table";
 
 const Img = styled.img`
   display: block;
@@ -57,86 +45,85 @@ function CabinRow({ cabin }) {
 
   const isPending = isDeleting || IsCreating;
 
-  const [showForm, setShowForm] = useState(false);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [showDuplicateConfirm, setShowDuplicateConfirm] = useState(false);
-
-  const deleteHandle = () => {
-    DeleteCabin(id);
-    setShowDeleteConfirm(false);
+  const deleteHandle = closeModal => {
+    DeleteCabin(id, {
+      onSuccess: () => {
+        closeModal?.();
+      },
+    });
   };
 
-  const duplicateHandle = () => {
-    CreateCabin({
-      name: name + "-copy",
-      maxCapacity,
-      regularPrice,
-      discount,
-      description,
-      image,
-    });
-    setShowDuplicateConfirm(false);
+  const duplicateHandle = closeModal => {
+    CreateCabin(
+      {
+        name: name + "-copy",
+        maxCapacity,
+        regularPrice,
+        discount,
+        description,
+        image,
+      },
+      {
+        onSuccess: () => {
+          closeModal?.();
+        },
+      },
+    );
   };
   return (
-    <>
-      <TableRow role="row">
-        <Img src={image} />
-        <Cabin>{name}</Cabin>
-        <div>Fits up to {maxCapacity} guests</div>
-        <Price>{formatCurrency(regularPrice)}</Price>
-        {discount ? (
-          <Discount>{formatCurrency(discount)}</Discount>
-        ) : (
-          <span>&mdash;</span>
-        )}
-        <div>
-          <ButtonIcon
-            type="button"
-            aria-label="Duplicate cabin"
-            onClick={() => setShowDuplicateConfirm(true)}
-          >
-            <HiOutlineSquare2Stack />
-          </ButtonIcon>
-          <ButtonIcon
-            type="button"
-            onClick={() => setShowDeleteConfirm(true)}
-            disabled={isPending}
-            aria-label="Delete cabin"
-          >
-            <HiOutlineTrash />
-          </ButtonIcon>
-          <ButtonIcon
-            type="button"
-            onClick={() => setShowForm(true)}
-            aria-label="Edit cabin"
-          >
-            <HiOutlinePencilSquare />
-          </ButtonIcon>
-        </div>
-      </TableRow>
-      {showDeleteConfirm && (
-        <ConfirmDelete
-          resourceName={name}
-          onConfirm={deleteHandle}
-          onCancel={() => setShowDeleteConfirm(false)}
-          disabled={isPending}
-        />
+    <Table.Row>
+      <Img src={image} />
+      <Cabin>{name}</Cabin>
+      <div>Fits up to {maxCapacity} guests</div>
+      <Price>{formatCurrency(regularPrice)}</Price>
+      {discount ? (
+        <Discount>{formatCurrency(discount)}</Discount>
+      ) : (
+        <span>&mdash;</span>
       )}
-      {showDuplicateConfirm && (
-        <ConfirmDuplicate
-          resourceName={name}
-          onConfirm={duplicateHandle}
-          onCancel={() => setShowDuplicateConfirm(false)}
-          disabled={isPending}
-        />
-      )}
-      {showForm && (
-        <CreateCabinForm
-          onCancel={() => setShowForm(false)}
-          cabinToEdit={cabin}
-        />
-      )}
-    </>
+      <div>
+        <Modal>
+          <Modal.Open opens={"duplicate-confirm"}>
+            <ButtonIcon type="button" aria-label="Duplicate cabin">
+              <HiOutlineSquare2Stack />
+            </ButtonIcon>
+          </Modal.Open>
+          <Modal.Window name={"duplicate-confirm"}>
+            <ConfirmDuplicate
+              resourceName={name}
+              onConfirm={duplicateHandle}
+              disabled={isPending}
+            />
+          </Modal.Window>
+
+          <Modal.Open opens={"edit-form"}>
+            <ButtonIcon type="button" aria-label="Edit cabin">
+              <HiOutlinePencilSquare />
+            </ButtonIcon>
+          </Modal.Open>
+          <Modal.Window name={"edit-form"}>
+            <CreateCabinForm cabinToEdit={cabin} />
+          </Modal.Window>
+
+          <Modal.Open opens={"delete-confirm"}>
+            <ButtonIcon
+              type="button"
+              disabled={isPending}
+              aria-label="Delete cabin"
+            >
+              <HiOutlineTrash />
+            </ButtonIcon>
+          </Modal.Open>
+          <Modal.Window name={"delete-confirm"}>
+            <ConfirmDelete
+              resourceName={name}
+              onConfirm={deleteHandle}
+              disabled={isPending}
+            />
+          </Modal.Window>
+        </Modal>
+      </div>
+    </Table.Row>
   );
 }
 
